@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pymongo
+python-multipart
+yt-dlp
+ffmpeg-python
+openai-whisper
+torch
+python-dotenv
+yagmail

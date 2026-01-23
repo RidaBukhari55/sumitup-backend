@@ -2,9 +2,8 @@ fastapi
 uvicorn
 pymongo
 python-multipart
+whisper
 yt-dlp
 ffmpeg-python
-openai-whisper
-torch
 python-dotenv
 yagmail

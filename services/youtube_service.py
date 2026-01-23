@@ -2,6 +2,11 @@ import yt_dlp
 import os
 import uuid
 
+VIDEO_DIR = "temp/videos"
+AUDIO_DIR = "temp/audio"
+os.makedirs(VIDEO_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
 def normalize_youtube_url(url: str) -> str:
     url = url.strip()
     if "/shorts/" in url:
@@ -9,25 +14,23 @@ def normalize_youtube_url(url: str) -> str:
         url = f"https://www.youtube.com/watch?v={video_id}"
     return url
 
-def download_youtube_audio(url: str, save_path: str) -> str:
+def download_youtube_video(url: str) -> str:
+    """
+    Downloads YouTube video to VIDEO_DIR.
+    Returns generated video filename ONLY.
+    """
     url = normalize_youtube_url(url)
     print("🔗 Normalized YouTube URL:", url)
 
-    os.makedirs(save_path, exist_ok=True)
-
-    unique_name = f"{uuid.uuid4()}.mp3"
-    output_path = os.path.join(save_path, unique_name)
+    ext = "mp4"
+    filename = f"{uuid.uuid4()}.{ext}"
+    output_path = os.path.join(VIDEO_DIR, filename)
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestvideo+bestaudio/best",
         "outtmpl": output_path,
-        "quiet": True,
+        "quiet": False,
         "noplaylist": True,
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }],
     }
 
     try:
@@ -35,10 +38,7 @@ def download_youtube_audio(url: str, save_path: str) -> str:
             ydl.download([url])
     except Exception as e:
         print("❌ yt-dlp failed:", e)
-        raise Exception("Failed to download YouTube audio")
+        raise Exception("Failed to download YouTube video")
 
-    if not os.path.exists(output_path):
-        raise Exception("Audio download failed")
-
-    print(f"✅ YouTube audio downloaded: {output_path}")
-    return unique_name
+    print(f"✅ YouTube video downloaded: {output_path}")
+    return filename

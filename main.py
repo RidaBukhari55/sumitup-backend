@@ -17,12 +17,9 @@ app = FastAPI(title="SumItUp API")
 # CORS settings (React frontend)
 # =========================
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://sumitup.vercel.app",      # future frontend
-    "https://sumitup-api.onrender.com" # backend
+    "http://localhost:5173",   # Vite default port
+    "http://127.0.0.1:5173"
 ]
-
 
 app.add_middleware(
     CORSMiddleware,

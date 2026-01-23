@@ -1,13 +1,22 @@
 from pymongo import MongoClient
+from dotenv import load_dotenv
 import os
 
-MONGO_URI = os.getenv("MONGO_URI")
+# Load environment variables
+load_dotenv()
 
-if not MONGO_URI:
-    raise Exception("MONGO_URI not set in environment")
+# Direct connection string
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://sumitup:sumitup345@fyp-cluster.x0opo1n.mongodb.net/fypdb?retryWrites=true&w=majority")
 
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-client.admin.command("ping")
+try:
+    # Set serverSelectionTimeoutMS to avoid hanging
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    # Test connection
+    client.admin.command('ping')
+    print("✅ MongoDB connected successfully")
+except Exception as e:
+    print(f"❌ MongoDB connection failed: {e}")
+    raise
 
 db = client["fypdb"]
 

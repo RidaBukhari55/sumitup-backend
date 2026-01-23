@@ -3,16 +3,20 @@ from fastapi.responses import JSONResponse
 import os
 import uuid
 from database import videos_collection
-from services.youtube_service import download_youtube_audio
-
-
+import yt_dlp
 
 router = APIRouter()
 
-UPLOAD_DIR = "temp/videos"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+VIDEO_DIR = "temp/videos"
+os.makedirs(VIDEO_DIR, exist_ok=True)
 
 
+def normalize_youtube_url(url: str) -> str:
+    url = url.strip()
+    if "/shorts/" in url:
+        video_id = url.split("/shorts/")[1].split("?")[0]
+        url = f"https://www.youtube.com/watch?v={video_id}"
+    return url
 
 
 @router.post("/upload")
@@ -20,9 +24,9 @@ async def upload_video(
     file: UploadFile = File(None),
     youtube_url: str = Form(None)
 ):
-
     print("Received file:", file)
     print("Received youtube_url:", youtube_url)
+
     # 🔴 Validation
     if not file and not youtube_url:
         raise HTTPException(status_code=400, detail="File or YouTube URL required")
@@ -31,14 +35,28 @@ async def upload_video(
     # ✅ CASE 1: YOUTUBE LINK
     # ==========================
     if youtube_url:
+        youtube_url = normalize_youtube_url(youtube_url)
+        temp_name = str(uuid.uuid4())
+        output_template = os.path.join(VIDEO_DIR, temp_name + ".%(ext)s")
+
+        ydl_opts = {
+            "outtmpl": output_template,
+            "format": "bestvideo+bestaudio/best",
+            "quiet": False,
+            "noplaylist": True,
+        }
+
         try:
-            filename = download_youtube_audio(youtube_url, UPLOAD_DIR)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(youtube_url, download=True)
+                filename = ydl.prepare_filename(info_dict)  # ✅ real downloaded file
+            print(f"✅ YouTube video downloaded to: {filename}")
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=f"YouTube download failed: {e}")
 
         video_data = {
             "original_name": youtube_url,
-            "filename": filename,
+            "filename": os.path.basename(filename),
             "status": "uploaded",
             "source": "youtube",
             "youtube_url": youtube_url
@@ -50,7 +68,7 @@ async def upload_video(
     else:
         ext = file.filename.split(".")[-1]
         filename = f"{uuid.uuid4()}.{ext}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
+        file_path = os.path.join(VIDEO_DIR, filename)
 
         with open(file_path, "wb") as f:
             f.write(await file.read())
@@ -63,10 +81,10 @@ async def upload_video(
             "youtube_url": None
         }
 
-    # ✅ DB INSERT (CRITICAL)
+    # ✅ DB INSERT
     videos_collection.insert_one(video_data)
 
     return JSONResponse({
         "message": "Uploaded successfully",
-        "filename": filename
+        "filename": video_data["filename"]
     })

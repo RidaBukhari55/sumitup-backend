@@ -12,7 +12,7 @@ class EmailService:
         self.sender_password = os.getenv("GMAIL_PASSWORD")
 
         if not self.sender_email or not self.sender_password:
-            print("❌ Gmail credentials not found in environment variables")
+            print("Gmail credentials not found in environment variables")
             print("Please set GMAIL_EMAIL and GMAIL_PASSWORD in .env file")
             self.yag = None
             return
@@ -21,7 +21,7 @@ class EmailService:
             self.yag = yagmail.SMTP(self.sender_email, self.sender_password)
             print("✅ Email service initialized successfully")
         except Exception as e:
-            print(f"❌ Email service initialization failed: {e}")
+            print(f"Email service initialization failed: {e}")
             print("Make sure you have:")
             print("1. Correct Gmail email and app password")
             print("2. 2-factor authentication enabled on Gmail")
@@ -33,7 +33,7 @@ class EmailService:
         Send password reset email to user
         """
         if not self.yag:
-            print("❌ Email service not available")
+            print(" Email service not available")
             return False
 
         try:
@@ -103,7 +103,7 @@ class EmailService:
             return True
 
         except Exception as e:
-            print(f"❌ Failed to send email to {recipient_email}: {e}")
+            print(f"Failed to send email to {recipient_email}: {e}")
             return False
 
 # Global email service instance
